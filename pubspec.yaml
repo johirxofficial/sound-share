@@ -14,9 +14,10 @@ dependencies:
   shelf_router: ^1.1.4
   # For getting local network IP
   network_info_plus: ^5.0.0
-  # For audio capturing
-  record: ^5.0.0
+  # For audio capturing (Version updated to fix platform bugs)
+  record: ^5.1.2
 
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
