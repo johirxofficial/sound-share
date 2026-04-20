@@ -59,11 +59,9 @@ const String webInterfaceHTML = """
         <p>Streaming directly from Boss's PC</p>
         
         <button id="playBtn" class="btn">Connect & Listen</button>
-        <div id="status" class="pulse">🔴 LIVE STREAMING ACTVE</div>
+        <div id="status" class="pulse">🔴 LIVE STREAMING ACTIVE</div>
         
-        <audio id="audioPlayer" crossorigin="anonymous">
-            <source src="/stream" type="audio/wav">
-        </audio>
+        <audio id="audioPlayer" crossorigin="anonymous"></audio>
     </div>
 
     <script>
@@ -72,18 +70,28 @@ const String webInterfaceHTML = """
         const status = document.getElementById('status');
         let isPlaying = false;
 
-        playBtn.addEventListener('click', () => {
+        playBtn.addEventListener('click', async () => {
             if (!isPlaying) {
-                audioPlayer.src = "/stream?" + new Date().getTime(); 
-                audioPlayer.play().then(() => {
+                try {
+                    playBtn.textContent = 'Loading Stream...';
+                    // Force cache bypass
+                    audioPlayer.src = "/stream?t=" + new Date().getTime(); 
+                    audioPlayer.load();
+                    
+                    await audioPlayer.play();
+                    
                     playBtn.textContent = 'Stop Listening';
                     playBtn.classList.add('playing');
                     status.style.display = 'block';
                     isPlaying = true;
-                }).catch(e => alert("Autoplay blocked! Click again."));
+                } catch (error) {
+                    console.error("Playback failed:", error);
+                    playBtn.textContent = 'Connect & Listen';
+                    alert("Browser blocked the audio! Make sure the host PC has clicked 'Start Server' and tap this button again.");
+                }
             } else {
                 audioPlayer.pause();
-                audioPlayer.currentTime = 0;
+                audioPlayer.src = "";
                 playBtn.textContent = 'Connect & Listen';
                 playBtn.classList.remove('playing');
                 status.style.display = 'none';

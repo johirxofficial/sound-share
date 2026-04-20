@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:network_info_plus/network_info_plus.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_router/shelf_router.dart' as shelf_router;
@@ -38,12 +37,12 @@ class ServerControlScreen extends StatefulWidget {
 }
 
 class _ServerControlScreenState extends State<ServerControlScreen> {
-  String _ipAddress = "Loading...";
+  String _ipAddress = "Detecting IP...";
   bool _isServerRunning = false;
   
   final AudioRecorder _audioRecorder = AudioRecorder();
   StreamController<List<int>>? _audioStreamController;
-  late HttpServer _server;
+  HttpServer? _server;
 
   @override
   void initState() {
@@ -51,12 +50,29 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
     _fetchIP();
   }
 
+  // 🔥 100% Native IP Detection (No external buggy packages needed)
   Future<void> _fetchIP() async {
-    final info = NetworkInfo();
-    final ip = await info.getWifiIP();
-    setState(() {
-      _ipAddress = ip ?? "127.0.0.1 (No LAN detected)";
-    });
+    String detectedIp = "127.0.0.1";
+    try {
+      final interfaces = await NetworkInterface.list(type: InternetAddressType.IPv4);
+      for (var interface in interfaces) {
+        for (var addr in interface.addresses) {
+          if (!addr.isLoopback) {
+            detectedIp = addr.address;
+            break;
+          }
+        }
+        if (detectedIp != "127.0.0.1") break;
+      }
+    } catch (e) {
+      debugPrint("IP fetch error: $e");
+    }
+    
+    if (mounted) {
+      setState(() {
+        _ipAddress = detectedIp;
+      });
+    }
   }
 
   Future<void> _toggleServer() async {
@@ -71,8 +87,9 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
     _audioStreamController = StreamController<List<int>>.broadcast();
     
     if (await _audioRecorder.hasPermission()) {
+      // 🔥 Changed to WAV encoder so mobile browsers accept the stream!
       final stream = await _audioRecorder.startStream(const RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
+        encoder: AudioEncoder.wav, 
         sampleRate: 44100,
         numChannels: 2,
       ));
@@ -96,6 +113,7 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
           'Content-Type': 'audio/wav',
           'Transfer-Encoding': 'chunked',
           'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache, no-store, must-revalidate', // Block caching
         });
       }
       return Response.internalServerError();
@@ -111,7 +129,7 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
   Future<void> _stopServer() async {
     await _audioRecorder.stop();
     await _audioStreamController?.close();
-    await _server.close(force: true);
+    await _server?.close(force: true);
     
     setState(() {
       _isServerRunning = false;

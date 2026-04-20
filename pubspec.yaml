@@ -11,7 +11,7 @@ dependencies:
     sdk: flutter
   shelf: ^1.4.0
   shelf_router: ^1.1.4
-  network_info_plus: ^5.0.0
+  # Removed network_info_plus, we will use native Dart!
   record: ^5.1.2
 
 dev_dependencies:
@@ -22,7 +22,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-# 🔥 The Override Hack (To fix the build error on GitHub Actions)
 dependency_overrides:
   record_linux:
     git:
