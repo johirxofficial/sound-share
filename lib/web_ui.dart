@@ -1,5 +1,3 @@
-// lib/web_ui.dart
-
 const String webInterfaceHTML = """
 <!DOCTYPE html>
 <html lang="en">
@@ -28,10 +26,7 @@ const String webInterfaceHTML = """
             max-width: 400px;
             width: 90%;
         }
-        h1 {
-            color: #38bdf8;
-            margin-bottom: 10px;
-        }
+        h1 { color: #38bdf8; margin-bottom: 10px; }
         p { color: #94a3b8; margin-bottom: 30px; }
         .btn {
             background-color: #0ea5e9;
@@ -61,7 +56,7 @@ const String webInterfaceHTML = """
 <body>
     <div class="container">
         <h1>🎧 SoundShare</h1>
-        <p>Streaming directly from the Host PC</p>
+        <p>Streaming directly from Boss's PC</p>
         
         <button id="playBtn" class="btn">Connect & Listen</button>
         <div id="status" class="pulse">🔴 LIVE STREAMING ACTVE</div>
@@ -79,7 +74,6 @@ const String webInterfaceHTML = """
 
         playBtn.addEventListener('click', () => {
             if (!isPlaying) {
-                // Reload the stream to get the latest chunk
                 audioPlayer.src = "/stream?" + new Date().getTime(); 
                 audioPlayer.play().then(() => {
                     playBtn.textContent = 'Stop Listening';

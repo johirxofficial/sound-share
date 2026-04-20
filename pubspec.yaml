@@ -9,15 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # Local Web Server
   shelf: ^1.4.0
   shelf_router: ^1.1.4
-  # For getting local network IP
   network_info_plus: ^5.0.0
-  # For audio capturing (Version updated to fix platform bugs)
   record: ^5.1.2
 
-  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -25,3 +21,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+# 🔥 The Override Hack (To fix the build error on GitHub Actions)
+dependency_overrides:
+  record_linux:
+    git:
+      url: https://github.com/llfbandit/record.git
+      path: record_linux

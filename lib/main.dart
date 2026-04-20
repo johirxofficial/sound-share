@@ -1,13 +1,12 @@
-// lib/main.dart
 import 'dart:async';
-import 'dart:io'; // 🔥 FIXED: Added missing import for HttpServer
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
-import 'package:shelf_router/shelf_router.dart' as shelf_router; // 🔥 FIXED: Aliased to prevent Router conflict
+import 'package:shelf_router/shelf_router.dart' as shelf_router;
 import 'package:record/record.dart';
-import 'web_ui.dart'; 
+import 'web_ui.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +43,7 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
   
   final AudioRecorder _audioRecorder = AudioRecorder();
   StreamController<List<int>>? _audioStreamController;
-  late final HttpServer _server;
+  late HttpServer _server;
 
   @override
   void initState() {
@@ -85,8 +84,7 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
       });
     }
 
-    // 🔥 FIXED: Using the aliased router
-    final router = shelf_router.Router(); 
+    final router = shelf_router.Router();
     
     router.get('/', (Request request) {
       return Response.ok(webInterfaceHTML, headers: {'Content-Type': 'text/html'});
@@ -122,7 +120,7 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
 
   @override
   void dispose() {
-    _stopServer();
+    if (_isServerRunning) _stopServer();
     super.dispose();
   }
 

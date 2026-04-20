@@ -2,10 +2,10 @@ name: "SoundShare Auto Builder & Packager"
 
 on:
   push:
-    branches: [ "main", "master" ] # Main branch-e code gele magic shuru hobe
+    branches: [ "main", "master" ]
 
 permissions:
-  contents: write # Release-e zip file upload korar permission
+  contents: write
 
 jobs:
   build_and_release:
@@ -24,8 +24,7 @@ jobs:
       - name: ⚙️ Enable Windows Desktop
         run: flutter config --enable-windows-desktop
 
-      # 👇 EI NOTUN MAGIC STEP TA ADD KORUN 👇
-      - name: 🪄 Generate Windows Folder
+      - name: 🪄 Generate Windows Folder (Web Fix)
         run: flutter create --platforms=windows .
 
       - name: 📦 Get Dependencies
@@ -37,7 +36,6 @@ jobs:
       - name: 📂 Organizing Files
         shell: pwsh
         run: |
-          # Build folder theke .exe ar .dll file gulo ekti package-e nicchi
           New-Item -ItemType Directory -Force -Path .\SoundShare_Package
           Copy-Item -Path .\build\windows\x64\runner\Release\* -Destination .\SoundShare_Package -Recurse
 
