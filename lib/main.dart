@@ -14,11 +14,10 @@ void main() {
 
 class SoundShareApp extends StatelessWidget {
   const SoundShareApp({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SoundShare by Johirxofficial',
+      title: 'SoundShare Pro',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF0F172A),
         primaryColor: const Color(0xFF38BDF8),
@@ -31,14 +30,14 @@ class SoundShareApp extends StatelessWidget {
 
 class ServerControlScreen extends StatefulWidget {
   const ServerControlScreen({Key? key}) : super(key: key);
-
   @override
   State<ServerControlScreen> createState() => _ServerControlScreenState();
 }
 
 class _ServerControlScreenState extends State<ServerControlScreen> {
-  String _ipAddress = "Detecting IP...";
+  String _ipAddress = "Finding IP...";
   bool _isServerRunning = false;
+  String _statusMessage = "System Ready";
   
   final AudioRecorder _audioRecorder = AudioRecorder();
   StreamController<List<int>>? _audioStreamController;
@@ -50,151 +49,92 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
     _fetchIP();
   }
 
-  // 🔥 100% Native IP Detection (No external buggy packages needed)
   Future<void> _fetchIP() async {
-    String detectedIp = "127.0.0.1";
     try {
       final interfaces = await NetworkInterface.list(type: InternetAddressType.IPv4);
       for (var interface in interfaces) {
         for (var addr in interface.addresses) {
           if (!addr.isLoopback) {
-            detectedIp = addr.address;
-            break;
+            setState(() => _ipAddress = addr.address);
+            return;
           }
         }
-        if (detectedIp != "127.0.0.1") break;
       }
     } catch (e) {
-      debugPrint("IP fetch error: $e");
-    }
-    
-    if (mounted) {
-      setState(() {
-        _ipAddress = detectedIp;
-      });
-    }
-  }
-
-  Future<void> _toggleServer() async {
-    if (_isServerRunning) {
-      await _stopServer();
-    } else {
-      await _startServer();
+      setState(() => _ipAddress = "127.0.0.1");
     }
   }
 
   Future<void> _startServer() async {
-    _audioStreamController = StreamController<List<int>>.broadcast();
-    
-    if (await _audioRecorder.hasPermission()) {
-      // 🔥 Changed to WAV encoder so mobile browsers accept the stream!
-      final stream = await _audioRecorder.startStream(const RecordConfig(
-        encoder: AudioEncoder.wav, 
-        sampleRate: 44100,
-        numChannels: 2,
-      ));
+    try {
+      _audioStreamController = StreamController<List<int>>.broadcast();
       
-      stream.listen((data) {
-        if (_audioStreamController?.isClosed == false) {
-          _audioStreamController?.add(data);
-        }
-      });
-    }
-
-    final router = shelf_router.Router();
-    
-    router.get('/', (Request request) {
-      return Response.ok(webInterfaceHTML, headers: {'Content-Type': 'text/html'});
-    });
-
-    router.get('/stream', (Request request) {
-      if (_audioStreamController != null) {
-        return Response.ok(_audioStreamController!.stream, headers: {
-          'Content-Type': 'audio/wav',
-          'Transfer-Encoding': 'chunked',
-          'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'no-cache, no-store, must-revalidate', // Block caching
+      if (await _audioRecorder.hasPermission()) {
+        final stream = await _audioRecorder.startStream(const RecordConfig(
+          encoder: AudioEncoder.wav,
+          sampleRate: 44100,
+          numChannels: 2,
+        ));
+        stream.listen((data) {
+          if (_audioStreamController?.isClosed == false) _audioStreamController?.add(data);
         });
+      } else {
+        throw "Mic/Stereo Mix Permission Denied!";
       }
-      return Response.internalServerError();
-    });
 
-    _server = await shelf_io.serve(router.call, '0.0.0.0', 8080);
-    
-    setState(() {
-      _isServerRunning = true;
-    });
+      final router = shelf_router.Router();
+      router.get('/', (r) => Response.ok(webInterfaceHTML, headers: {'Content-Type': 'text/html'}));
+      router.get('/stream', (r) => Response.ok(_audioStreamController!.stream, headers: {
+        'Content-Type': 'audio/wav',
+        'Transfer-Encoding': 'chunked',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache',
+      }));
+
+      _server = await shelf_io.serve(router.call, '0.0.0.0', 8080);
+      setState(() {
+        _isServerRunning = true;
+        _statusMessage = "Broadcasting Live!";
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
+      _stopServer();
+    }
   }
 
   Future<void> _stopServer() async {
     await _audioRecorder.stop();
     await _audioStreamController?.close();
     await _server?.close(force: true);
-    
     setState(() {
       _isServerRunning = false;
+      _statusMessage = "Server Stopped";
     });
-  }
-
-  @override
-  void dispose() {
-    if (_isServerRunning) _stopServer();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('⚡ Shadow SoundShare'),
-        backgroundColor: const Color(0xFF1E293B),
-        elevation: 0,
-      ),
-      body: Center(
+      body: Container(
+        padding: const EdgeInsets.all(30),
+        alignment: Alignment.center,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.router_outlined, size: 80, color: Color(0xFF38BDF8)),
+            const Icon(Icons.waves, size: 100, color: Color(0xFF38BDF8)),
             const SizedBox(height: 20),
-            const Text(
-              "Ask users to visit this link:",
-              style: TextStyle(color: Colors.grey, fontSize: 16),
-            ),
+            Text("Link: http://$_ipAddress:8080", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF38BDF8), width: 1),
-              ),
-              child: Text(
-                "http://$_ipAddress:8080",
-                style: const TextStyle(
-                  fontSize: 24, 
-                  fontWeight: FontWeight.bold, 
-                  color: Colors.white,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ),
-            const SizedBox(height: 50),
-            ElevatedButton.icon(
-              onPressed: _toggleServer,
-              icon: Icon(_isServerRunning ? Icons.stop_circle : Icons.play_arrow),
-              label: Text(_isServerRunning ? "STOP STREAMING" : "START SERVER"),
+            Text(_statusMessage, style: TextStyle(color: _isServerRunning ? Colors.green : Colors.grey)),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: _isServerRunning ? _stopServer : _startServer,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _isServerRunning ? Colors.redAccent : const Color(0xFF0EA5E9),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                backgroundColor: _isServerRunning ? Colors.red : Colors.blue,
+                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
               ),
+              child: Text(_isServerRunning ? "STOP SERVER" : "START SERVER"),
             ),
-            if (_isServerRunning) ...[
-              const SizedBox(height: 30),
-              const Text("🔴 Live & Broadcasting...", style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold))
-            ]
           ],
         ),
       ),

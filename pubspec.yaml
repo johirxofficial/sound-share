@@ -1,5 +1,5 @@
 name: sound_share
-description: Real-time system sound sharing app by Boss Johirxofficial.
+description: Real-time system sound sharing app by Johirxofficial.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,9 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  shelf: ^1.4.0
+  shelf: ^1.4.1
   shelf_router: ^1.1.4
-  # Removed network_info_plus, we will use native Dart!
   record: ^5.1.2
 
 dev_dependencies:

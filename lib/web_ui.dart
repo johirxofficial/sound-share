@@ -6,64 +6,24 @@ const String webInterfaceHTML = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoundShare | Listen Live</title>
     <style>
-        body {
-            background-color: #0f172a;
-            color: #f8fafc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: #1e293b;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-        h1 { color: #38bdf8; margin-bottom: 10px; }
-        p { color: #94a3b8; margin-bottom: 30px; }
-        .btn {
-            background-color: #0ea5e9;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-        }
-        .btn:hover { background-color: #0284c7; transform: scale(1.05); }
+        body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { background-color: #1e293b; padding: 40px; border-radius: 16px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        h1 { color: #38bdf8; }
+        .btn { background-color: #0ea5e9; color: white; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; width: 100%; }
+        .btn:hover { background-color: #0284c7; }
         .btn.playing { background-color: #ef4444; }
-        .btn.playing:hover { background-color: #dc2626; }
-        .pulse {
-            display: none;
-            margin-top: 20px;
-            color: #22c55e;
-            font-weight: bold;
-            animation: blink 1.5s infinite;
-        }
+        .pulse { display: none; margin-top: 20px; color: #22c55e; font-weight: bold; animation: blink 1.5s infinite; }
         @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎧 SoundShare</h1>
-        <p>Streaming directly from Boss's PC</p>
-        
+        <p>Boss's Live Audio Stream</p>
         <button id="playBtn" class="btn">Connect & Listen</button>
         <div id="status" class="pulse">🔴 LIVE STREAMING ACTIVE</div>
-        
         <audio id="audioPlayer" crossorigin="anonymous"></audio>
     </div>
-
     <script>
         const playBtn = document.getElementById('playBtn');
         const audioPlayer = document.getElementById('audioPlayer');
@@ -73,21 +33,16 @@ const String webInterfaceHTML = """
         playBtn.addEventListener('click', async () => {
             if (!isPlaying) {
                 try {
-                    playBtn.textContent = 'Loading Stream...';
-                    // Force cache bypass
-                    audioPlayer.src = "/stream?t=" + new Date().getTime(); 
-                    audioPlayer.load();
-                    
+                    playBtn.textContent = 'Connecting...';
+                    audioPlayer.src = "/stream?t=" + Date.now();
                     await audioPlayer.play();
-                    
                     playBtn.textContent = 'Stop Listening';
                     playBtn.classList.add('playing');
                     status.style.display = 'block';
                     isPlaying = true;
-                } catch (error) {
-                    console.error("Playback failed:", error);
+                } catch (e) {
+                    alert("Click again! Browser blocked initial playback.");
                     playBtn.textContent = 'Connect & Listen';
-                    alert("Browser blocked the audio! Make sure the host PC has clicked 'Start Server' and tap this button again.");
                 }
             } else {
                 audioPlayer.pause();
