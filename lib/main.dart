@@ -1,12 +1,13 @@
 // lib/main.dart
 import 'dart:async';
+import 'dart:io'; // 🔥 FIXED: Added missing import for HttpServer
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
-import 'package:shelf_router/shelf_router.dart';
+import 'package:shelf_router/shelf_router.dart' as shelf_router; // 🔥 FIXED: Aliased to prevent Router conflict
 import 'package:record/record.dart';
-import 'web_ui.dart'; // Amader toiri kora web UI
+import 'web_ui.dart'; 
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +42,6 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
   String _ipAddress = "Loading...";
   bool _isServerRunning = false;
   
-  // Audio & Server variables
   final AudioRecorder _audioRecorder = AudioRecorder();
   StreamController<List<int>>? _audioStreamController;
   late final HttpServer _server;
@@ -69,10 +69,8 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
   }
 
   Future<void> _startServer() async {
-    // 1. Setup Audio Broadcast Stream
     _audioStreamController = StreamController<List<int>>.broadcast();
     
-    // Start recording (PCM format for browser compatibility)
     if (await _audioRecorder.hasPermission()) {
       final stream = await _audioRecorder.startStream(const RecordConfig(
         encoder: AudioEncoder.pcm16bits,
@@ -87,15 +85,13 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
       });
     }
 
-    // 2. Setup Web Server Router
-    final router = Router();
+    // 🔥 FIXED: Using the aliased router
+    final router = shelf_router.Router(); 
     
-    // Send Web UI HTML
     router.get('/', (Request request) {
       return Response.ok(webInterfaceHTML, headers: {'Content-Type': 'text/html'});
     });
 
-    // Send Audio Stream
     router.get('/stream', (Request request) {
       if (_audioStreamController != null) {
         return Response.ok(_audioStreamController!.stream, headers: {
@@ -107,7 +103,6 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
       return Response.internalServerError();
     });
 
-    // 3. Start Server on port 8080
     _server = await shelf_io.serve(router.call, '0.0.0.0', 8080);
     
     setState(() {
