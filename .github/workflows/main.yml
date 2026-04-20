@@ -1,4 +1,4 @@
-name: "SoundShare Release"
+name: "SoundShare V2.0 Auto Builder"
 
 on:
   push:
@@ -8,31 +8,49 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build_and_release:
     runs-on: windows-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      - name: ⚙️ Setup
+      - name: ⚙️ Setup Windows Desktop & Publisher
         run: |
           flutter config --enable-windows-desktop
           flutter create --platforms=windows --org com.johirxofficial .
 
-      - name: 📦 Build
-        run: flutter build windows --release --pub-version=1.0.0 --build-number=1
+      - name: 📦 Get Dependencies
+        run: flutter pub get
 
-      - name: 🤐 Zip
+      - name: 🏗️ Build Windows App (Version 2.0.0)
+        run: flutter build windows --release --build-name=2.0.0 --build-number=2
+
+      - name: 📂 Organizing Files
         shell: pwsh
         run: |
-          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath SoundShare_V1.zip
+          mkdir SoundShare_V2_Package
+          Copy-Item -Path build\windows\x64\runner\Release\* -Destination SoundShare_V2_Package -Recurse
+          Compress-Archive -Path SoundShare_V2_Package\* -DestinationPath SoundShare_V2.0.zip
 
-      - name: 🚀 Release
+      - name: 💾 Backup Artifact Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: SoundShare_Windows_App_V2
+          path: SoundShare_V2.0.zip
+
+      - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          files: SoundShare_V1.zip
+          tag_name: v2.0.0-${{ github.run_number }}
+          name: "SoundShare Ultimate V2.0 (Build ${{ github.run_number }})"
+          draft: false
+          prerelease: false
+          files: SoundShare_V2.0.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

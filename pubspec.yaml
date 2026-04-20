@@ -1,7 +1,7 @@
 name: sound_share
-description: Real-time system sound sharing app by Johirxofficial.
+description: Real-time system sound sharing app by Boss Johirxofficial.
 publish_to: 'none'
-version: 1.0.0+1
+version: 2.0.0+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -21,6 +21,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+# 🔥 The Override Hack (To bypass GitHub Action Linux Bugs)
 dependency_overrides:
   record_linux:
     git:
