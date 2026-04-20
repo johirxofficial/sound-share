@@ -24,6 +24,10 @@ jobs:
       - name: ⚙️ Enable Windows Desktop
         run: flutter config --enable-windows-desktop
 
+      # 👇 EI NOTUN MAGIC STEP TA ADD KORUN 👇
+      - name: 🪄 Generate Windows Folder
+        run: flutter create --platforms=windows .
+
       - name: 📦 Get Dependencies
         run: flutter pub get
 
