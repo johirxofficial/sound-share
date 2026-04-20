@@ -1,0 +1,55 @@
+name: "SoundShare Auto Builder & Packager"
+
+on:
+  push:
+    branches: [ "main", "master" ] # Main branch-e code gele magic shuru hobe
+
+permissions:
+  contents: write # Release-e zip file upload korar permission
+
+jobs:
+  build_and_release:
+    runs-on: windows-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          architecture: x64
+
+      - name: ⚙️ Enable Windows Desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: 📦 Get Dependencies
+        run: flutter pub get
+
+      - name: 🏗️ Build Windows Application
+        run: flutter build windows --release
+
+      - name: 📂 Organizing Files
+        shell: pwsh
+        run: |
+          # Build folder theke .exe ar .dll file gulo ekti package-e nicchi
+          New-Item -ItemType Directory -Force -Path .\SoundShare_Package
+          Copy-Item -Path .\build\windows\x64\runner\Release\* -Destination .\SoundShare_Package -Recurse
+
+      - name: 🤐 Creating Zip Bundle
+        shell: pwsh
+        run: |
+          Compress-Archive -Path .\SoundShare_Package\* -DestinationPath .\SoundShare_Windows_ReadyToUse.zip
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "SoundShare Build v1.0.${{ github.run_number }}"
+          draft: false
+          prerelease: false
+          files: |
+            .\SoundShare_Windows_ReadyToUse.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
