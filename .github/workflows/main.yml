@@ -24,7 +24,7 @@ jobs:
       - name: ⚙️ Enable Windows Desktop
         run: flutter config --enable-windows-desktop
 
-      - name: 🪄 Generate Windows Folder (Web Fix)
+      - name: 🪄 Generate Windows Folder (Ghost Build)
         run: flutter create --platforms=windows .
 
       - name: 📦 Get Dependencies
@@ -36,13 +36,15 @@ jobs:
       - name: 📂 Organizing Files
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path .\SoundShare_Package
-          Copy-Item -Path .\build\windows\x64\runner\Release\* -Destination .\SoundShare_Package -Recurse
+          mkdir SoundShare_Package
+          Copy-Item -Path build\windows\x64\runner\Release\* -Destination SoundShare_Package -Recurse
+          Compress-Archive -Path SoundShare_Package\* -DestinationPath SoundShare_App.zip
 
-      - name: 🤐 Creating Zip Bundle
-        shell: pwsh
-        run: |
-          Compress-Archive -Path .\SoundShare_Package\* -DestinationPath .\SoundShare_Windows_ReadyToUse.zip
+      - name: 💾 Backup Artifact Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: SoundShare_Windows_App
+          path: SoundShare_App.zip
 
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -51,7 +53,6 @@ jobs:
           name: "SoundShare Build v1.0.${{ github.run_number }}"
           draft: false
           prerelease: false
-          files: |
-            .\SoundShare_Windows_ReadyToUse.zip
+          files: SoundShare_App.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
